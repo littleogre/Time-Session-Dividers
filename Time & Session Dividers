@@ -1,226 +1,152 @@
 //@version=6
-indicator("Time & Session Dividers", "TimeDividers", overlay=true)
+indicator("Complete Time & Session Dividers", "TimeDividers", overlay = true)
 
 // === HELPER FUNCTIONS ===
 
-// Function to format the timeframe string for the label
-f_formatTimeframe(string timeframe) =>
-    switch timeframe
-        "1" => "1M"
-        "3" => "3M"
-        "5" => "5M"
-        "15" => "15M"
-        "30" => "30M"
-        "60" => "1H"
+// Function to format the timeframe string for labels
+f_formatTimeframe(string tf) =>
+    switch tf
+        "1"   => "1M"
+        "3"   => "3M"
+        "5"   => "5M"
+        "15"  => "15M"
+        "30"  => "30M"
+        "60"  => "1H"
         "120" => "2H"
         "180" => "3H"
         "240" => "4H"
-        "D" => "1D"
-        "W" => "1W"
-        "M" => "1M"
-        => timeframe // Default: return the original string if no match
+        "D"   => "1D"
+        "W"   => "1W"
+        "M"   => "1M"
+        => tf 
 
-// Function to format the session string for the label (e.g., "1600-1800")
-// Note: Returning the session string directly to avoid complex string manipulation errors.
-f_formatSession(string session) =>
-    session // Returns the session input string directly for the label.
+// Function to convert string input to line style
+f_getLineStyle(string style) =>
+    switch style
+        "Dotted" => line.style_dotted
+        "Dashed" => line.style_dashed
+        => line.style_solid
 
 // === INPUTS ===
 
-// MODIFICATION: Replaced string input with a dropdown (options)
 g_tz = "Master Timezone Setting"
 i_timezone = input.string("America/New_York", "Timezone for All Dividers", group = g_tz, 
      options = [
-         // Americas (North)
          "America/Los_Angeles", "America/Vancouver", "America/Phoenix", "America/Denver", "America/Chicago", "America/Mexico_City", "America/New_York", "America/Toronto", 
-         // Americas (South)
          "America/Bogota", "America/Lima", "America/Caracas", "America/Santiago", "America/Buenos_Aires", "America/Sao_Paulo",
-         // Europe
          "Europe/London", "Europe/Dublin", "Europe/Lisbon", "Europe/Paris", "Europe/Berlin", "Europe/Madrid", "Europe/Rome", "Europe/Stockholm", "Europe/Zurich", "Europe/Athens", "Europe/Helsinki", "Europe/Amsterdam", "Europe/Oslo", "Europe/Warsaw",
-         // Europe/Middle East
          "Europe/Moscow", "Europe/Istanbul", "Asia/Jerusalem", "Asia/Dubai", "Asia/Tehran", "Asia/Riyadh",
-         // Asia/Pacific
          "Asia/Karachi", "Asia/Kolkata", "Asia/Bangkok", "Asia/Ho_Chi_Minh", "Asia/Singapore", "Asia/Hong_Kong", "Asia/Shanghai", "Asia/Taipei", "Asia/Seoul", "Asia/Tokyo", 
-         // Australia/Pacific
          "Australia/Perth", "Australia/Sydney", "Australia/Adelaide", "Australia/Brisbane", "Pacific/Auckland", "Pacific/Honolulu",
-         // UTC
          "Etc/UTC"
-     ],
-     tooltip = "Specify the timezone for all dividers. This should match your chart's timezone.")
+     ])
 
-// --- Divider 1 Settings (Timeframe) ---
+// --- Timeframe Divider Settings ---
 g1 = "Timeframe Divider 1"
-i_useDivider1 = input.bool(true, "Show Divider 1", group = g1)
-i_timeframe1 = input.timeframe("60", "Timeframe 1", group = g1)
-i_lineColor1 = input.color(color.white, "Line Color 1", group = g1)
-i_lineStyleStr1 = input.string("Dotted", "Line Style 1", options = ["Solid", "Dotted", "Dashed"], group = g1)
-i_showText1 = input.bool(true, "Show Text 1", group = g1)
+i_useDivider1      = input.bool(true, "Vertical Divider 1", group = g1)
+i_showOpenLine1    = input.bool(true, "Horizontal Open 1", group = g1)
+i_timeframe1       = input.timeframe("60", "Timeframe 1", group = g1)
+i_lineColor1       = input.color(color.white, "Color 1", group = g1)
+i_lineStyle1       = input.string("Dotted", "Style 1", options = ["Solid", "Dotted", "Dashed"], group = g1)
+i_showText1        = input.bool(true, "Show Text 1", group = g1)
 
-// --- Divider 2 Settings (Timeframe) ---
 g2 = "Timeframe Divider 2"
-i_useDivider2 = input.bool(false, "Show Divider 2", group = g2)
-i_timeframe2 = input.timeframe("240", "Timeframe 2", group = g2)
-i_lineColor2 = input.color(color.new(color.blue, 20), "Line Color 2", group = g2)
-i_lineStyleStr2 = input.string("Dotted", "Line Style 2", options = ["Solid", "Dotted", "Dashed"], group = g2)
-i_showText2 = input.bool(true, "Show Text 2", group = g2)
+i_useDivider2      = input.bool(false, "Vertical Divider 2", group = g2)
+i_showOpenLine2    = input.bool(false, "Horizontal Open 2", group = g2)
+i_timeframe2       = input.timeframe("240", "Timeframe 2", group = g2)
+i_lineColor2       = input.color(color.new(color.blue, 20), "Color 2", group = g2)
+i_lineStyle2       = input.string("Dotted", "Style 2", options = ["Solid", "Dotted", "Dashed"], group = g2)
+i_showText2        = input.bool(true, "Show Text 2", group = g2)
 
-// --- Divider 3 Settings (Timeframe) ---
 g3 = "Timeframe Divider 3"
-i_useDivider3 = input.bool(false, "Show Divider 3", group = g3)
-i_timeframe3 = input.timeframe("D", "Timeframe 3", group = g3)
-i_lineColor3 = input.color(color.new(color.yellow, 20), "Line Color 3", group = g3)
-i_lineStyleStr3 = input.string("Dotted", "Line Style 3", options = ["Solid", "Dotted", "Dashed"], group = g3)
-i_showText3 = input.bool(true, "Show Text 3", group = g3)
+i_useDivider3      = input.bool(false, "Vertical Divider 3", group = g3)
+i_showOpenLine3    = input.bool(false, "Horizontal Open 3", group = g3)
+i_timeframe3       = input.timeframe("D", "Timeframe 3", group = g3)
+i_lineColor3       = input.color(color.new(color.yellow, 20), "Color 3", group = g3)
+i_lineStyle3       = input.string("Dotted", "Style 3", options = ["Solid", "Dotted", "Dashed"], group = g3)
+i_showText3        = input.bool(true, "Show Text 3", group = g3)
 
-// --- Special Time Slot Divider 1 ---
-g4 = "Time Slot Divider 1 (Custom Session)"
-i_useTimeSlot1 = input.bool(true, "Show Time Slot Divider 1", group = g4)
-i_sessionStr1 = input.session("1600-1800", "Time Slot 1 (e.g., 1600-1800)", group = g4)
-i_lineColorSlot1 = input.color(color.new(color.red, 20), "Line Color Slot 1", group = g4)
-i_lineStyleStrSlot1 = input.string("Dotted", "Line Style Slot 1", options = ["Solid", "Dotted", "Dashed"], group = g4)
+// --- Custom Time Slot Divider Settings ---
+g4 = "Time Slot Divider 1"
+i_useSlot1      = input.bool(true, "Vertical Slot 1", group = g4)
+i_showOpenSlot1 = input.bool(true, "Horizontal Open Slot 1", group = g4)
+i_session1      = input.session("1600-1800", "Session 1", group = g4)
+i_colorSlot1    = input.color(color.new(color.red, 20), "Color Slot 1", group = g4)
+i_styleSlot1    = input.string("Dotted", "Style Slot 1", options = ["Solid", "Dotted", "Dashed"], group = g4)
 i_showTextSlot1 = input.bool(true, "Show Text Slot 1", group = g4)
 
-// --- Special Time Slot Divider 2 ---
-g5 = "Time Slot Divider 2 (Custom Session)"
-i_useTimeSlot2 = input.bool(false, "Show Time Slot Divider 2", group = g5)
-i_sessionStr2 = input.session("0900-1200", "Time Slot 2 (e.g., 0900-1200)", group = g5)
-i_lineColorSlot2 = input.color(color.new(color.green, 20), "Line Color Slot 2", group = g5)
-i_lineStyleStrSlot2 = input.string("Dotted", "Line Style Slot 2", options = ["Solid", "Dotted", "Dashed"], group = g5)
+g5 = "Time Slot Divider 2"
+i_useSlot2      = input.bool(false, "Vertical Slot 2", group = g5)
+i_showOpenSlot2 = input.bool(false, "Horizontal Open Slot 2", group = g5)
+i_session2      = input.session("0900-1200", "Session 2", group = g5)
+i_colorSlot2    = input.color(color.new(color.green, 20), "Color Slot 2", group = g5)
+i_styleSlot2    = input.string("Dotted", "Style Slot 2", options = ["Solid", "Dotted", "Dashed"], group = g5)
 i_showTextSlot2 = input.bool(true, "Show Text Slot 2", group = g5)
 
-// --- Special Time Slot Divider 3 ---
-g6 = "Time Slot Divider 3 (Custom Session)"
-i_useTimeSlot3 = input.bool(false, "Show Time Slot Divider 3", group = g6)
-i_sessionStr3 = input.session("0000-0300", "Time Slot 3 (e.g., 0000-0300)", group = g6)
-i_lineColorSlot3 = input.color(color.new(color.purple, 20), "Line Color Slot 3", group = g6)
-i_lineStyleStrSlot3 = input.string("Dotted", "Line Style Slot 3", options = ["Solid", "Dotted", "Dashed"], group = g6)
+g6 = "Time Slot Divider 3"
+i_useSlot3      = input.bool(false, "Vertical Slot 3", group = g6)
+i_showOpenSlot3 = input.bool(false, "Horizontal Open Slot 3", group = g6)
+i_session3      = input.session("0000-0300", "Session 3", group = g6)
+i_colorSlot3    = input.color(color.new(color.purple, 20), "Color Slot 3", group = g6)
+i_styleSlot3    = input.string("Dotted", "Style Slot 3", options = ["Solid", "Dotted", "Dashed"], group = g6)
 i_showTextSlot3 = input.bool(true, "Show Text Slot 3", group = g6)
-
 
 // === LOGIC & DRAWINGS ===
 
-// --- Process Divider 1 (Timeframe) ---
-if i_useDivider1
-    var lineStyle1 = switch i_lineStyleStr1
-        "Dotted" => line.style_dotted
-        "Dashed" => line.style_dashed
-        => line.style_solid
-    tf_time1 = time(i_timeframe1, i_timezone)
-    bool isNewTimeframeBar1 = ta.change(tf_time1) != 0
-    if isNewTimeframeBar1
-        line.new(bar_index, low, bar_index, high, xloc.bar_index, extend.both, i_lineColor1, lineStyle1, 1)
-        if i_showText1
-            label.new(bar_index, high, f_formatTimeframe(i_timeframe1), xloc.bar_index, yloc.abovebar, 
-                 color.new(color.white, 100), label.style_none, i_lineColor1, size.normal)
+// Persistent line IDs for horizontal open levels
+var line lnTF1 = na, var line lnTF2 = na, var line lnTF3 = na
+var line lnSL1 = na, var line lnSL2 = na, var line lnSL3 = na
 
-// --- Process Divider 2 (Timeframe) ---
-if i_useDivider2
-    var lineStyle2 = switch i_lineStyleStr2
-        "Dotted" => line.style_dotted
-        "Dashed" => line.style_dashed
-        => line.style_solid
-    tf_time2 = time(i_timeframe2, i_timezone)
-    bool isNewTimeframeBar2 = ta.change(tf_time2) != 0
-    if isNewTimeframeBar2
-        line.new(bar_index, low, bar_index, high, xloc.bar_index, extend.both, i_lineColor2, lineStyle2, 1)
-        if i_showText2
-            label.new(bar_index, high, f_formatTimeframe(i_timeframe2), xloc.bar_index, yloc.abovebar, 
-                 color.new(color.white, 100), label.style_none, i_lineColor2, size.normal)
+// --- Timeframe Logic Processing ---
+f_processTF(bool useVert, bool useHoriz, string tf, color clr, string style, bool showTxt, line lnID) =>
+    line currentLine = lnID
+    if useVert or useHoriz
+        tf_time = time(tf, i_timezone)
+        bool isNew = ta.change(tf_time) != 0
+        if isNew
+            if useHoriz
+                line.set_x2(currentLine, bar_index) // End previous
+                currentLine := line.new(bar_index, open, bar_index, open, xloc.bar_index, extend.none, clr, f_getLineStyle(style), 1)
+            if useVert
+                line.new(bar_index, low, bar_index, high, xloc.bar_index, extend.both, clr, f_getLineStyle(style), 1)
+                if showTxt
+                    label.new(bar_index, high, f_formatTimeframe(tf), xloc.bar_index, yloc.abovebar, color.new(color.white, 100), label.style_none, clr, size.normal)
+        if useHoriz
+            line.set_x2(currentLine, bar_index)
+    currentLine
 
-// --- Process Divider 3 (Timeframe) ---
-if i_useDivider3
-    var lineStyle3 = switch i_lineStyleStr3
-        "Dotted" => line.style_dotted
-        "Dashed" => line.style_dashed
-        => line.style_solid
-    tf_time3 = time(i_timeframe3, i_timezone)
-    bool isNewTimeframeBar3 = ta.change(tf_time3) != 0
-    if isNewTimeframeBar3
-        line.new(bar_index, low, bar_index, high, xloc.bar_index, extend.both, i_lineColor3, lineStyle3, 1)
-        if i_showText3
-            label.new(bar_index, high, f_formatTimeframe(i_timeframe3), xloc.bar_index, yloc.abovebar, 
-                 color.new(color.white, 100), label.style_none, i_lineColor3, size.normal)
+lnTF1 := f_processTF(i_useDivider1, i_showOpenLine1, i_timeframe1, i_lineColor1, i_lineStyle1, i_showText1, lnTF1)
+lnTF2 := f_processTF(i_useDivider2, i_showOpenLine2, i_timeframe2, i_lineColor2, i_lineStyle2, i_showText2, lnTF2)
+lnTF3 := f_processTF(i_useDivider3, i_showOpenLine3, i_timeframe3, i_lineColor3, i_lineStyle3, i_showText3, lnTF3)
 
-// --- Process Special Time Slot Divider 1 ---
-if i_useTimeSlot1
-    var lineStyleSlot1 = switch i_lineStyleStrSlot1
-        "Dotted" => line.style_dotted
-        "Dashed" => line.style_dashed
-        => line.style_solid
-    
-    string startHHMM1 = str.substring(i_sessionStr1, 0, 4) 
-    string endHHMM1 = str.substring(i_sessionStr1, 5, 9)   
-    string startLabel1 = str.format("{0}:{1}", str.substring(startHHMM1, 0, 2), str.substring(startHHMM1, 2, 4)) 
-    string endLabel1 = str.format("{0}:{1}", str.substring(endHHMM1, 0, 2), str.substring(endHHMM1, 2, 4))     
+// --- Time Slot Logic Processing ---
+f_processSlot(bool useVert, bool useHoriz, string sess, color clr, string style, bool showTxt, line lnID) =>
+    line currentLine = lnID
+    if useVert or useHoriz
+        bool isInSess = not na(time(timeframe.period, sess, i_timezone))
+        bool isStart  = isInSess and not isInSess[1]
+        bool isEnd    = not isInSess and isInSess[1]
+        
+        if isStart
+            if useHoriz
+                currentLine := line.new(bar_index, open, bar_index, open, xloc.bar_index, extend.none, clr, f_getLineStyle(style), 1)
+            if useVert
+                line.new(bar_index, low, bar_index, high, xloc.bar_index, extend.both, clr, f_getLineStyle(style), 1)
+                if showTxt
+                    label.new(bar_index, high, str.format("{0}:{1}", str.substring(sess, 0, 2), str.substring(sess, 2, 4)), xloc.bar_index, yloc.abovebar, color.new(color.white, 100), label.style_none, clr, size.normal)
+        
+        if isEnd
+            if useHoriz
+                line.set_x2(currentLine, bar_index)
+            if useVert
+                line.new(bar_index, low, bar_index, high, xloc.bar_index, extend.both, clr, f_getLineStyle(style), 1)
+                if showTxt
+                    label.new(bar_index, high, str.format("{0}:{1}", str.substring(sess, 5, 7), str.substring(sess, 7, 9)), xloc.bar_index, yloc.abovebar, color.new(color.white, 100), label.style_none, clr, size.normal)
+        
+        if isInSess and useHoriz
+            line.set_x2(currentLine, bar_index)
+    currentLine
 
-    bool isInSession1 = not na(time(timeframe.period, i_sessionStr1, i_timezone))
-    bool isSessionStart1 = isInSession1 and not isInSession1[1]
-    bool isSessionEnd1 = not isInSession1 and isInSession1[1]
-    
-    if isSessionStart1
-        line.new(bar_index, low, bar_index, high, xloc.bar_index, extend.both, i_lineColorSlot1, lineStyleSlot1, 1)
-        if i_showTextSlot1
-            label.new(bar_index, high, startLabel1, xloc.bar_index, yloc.abovebar, 
-                 color.new(color.white, 100), label.style_none, i_lineColorSlot1, size.normal)
-
-    if isSessionEnd1
-        line.new(bar_index, low, bar_index, high, xloc.bar_index, extend.both, i_lineColorSlot1, lineStyleSlot1, 1)
-        if i_showTextSlot1
-            label.new(bar_index, high, endLabel1, xloc.bar_index, yloc.abovebar, 
-                 color.new(color.white, 100), label.style_none, i_lineColorSlot1, size.normal)
-
-// --- Process Special Time Slot Divider 2 ---
-if i_useTimeSlot2
-    var lineStyleSlot2 = switch i_lineStyleStrSlot2
-        "Dotted" => line.style_dotted
-        "Dashed" => line.style_dashed
-        => line.style_solid
-    
-    string startHHMM2 = str.substring(i_sessionStr2, 0, 4) 
-    string endHHMM2 = str.substring(i_sessionStr2, 5, 9)   
-    string startLabel2 = str.format("{0}:{1}", str.substring(startHHMM2, 0, 2), str.substring(startHHMM2, 2, 4)) 
-    string endLabel2 = str.format("{0}:{1}", str.substring(endHHMM2, 0, 2), str.substring(endHHMM2, 2, 4))     
-
-    bool isInSession2 = not na(time(timeframe.period, i_sessionStr2, i_timezone))
-    bool isSessionStart2 = isInSession2 and not isInSession2[1]
-    bool isSessionEnd2 = not isInSession2 and isInSession2[1]
-    
-    if isSessionStart2
-        line.new(bar_index, low, bar_index, high, xloc.bar_index, extend.both, i_lineColorSlot2, lineStyleSlot2, 1)
-        if i_showTextSlot2
-            label.new(bar_index, high, startLabel2, xloc.bar_index, yloc.abovebar, 
-                 color.new(color.white, 100), label.style_none, i_lineColorSlot2, size.normal)
-
-    if isSessionEnd2
-        line.new(bar_index, low, bar_index, high, xloc.bar_index, extend.both, i_lineColorSlot2, lineStyleSlot2, 1)
-        if i_showTextSlot2
-            label.new(bar_index, high, endLabel2, xloc.bar_index, yloc.abovebar, 
-                 color.new(color.white, 100), label.style_none, i_lineColorSlot2, size.normal)
-
-// --- Process Special Time Slot Divider 3 ---
-if i_useTimeSlot3
-    var lineStyleSlot3 = switch i_lineStyleStrSlot3
-        "Dotted" => line.style_dotted
-        "Dashed" => line.style_dashed
-        => line.style_solid
-    
-    string startHHMM3 = str.substring(i_sessionStr3, 0, 4) 
-    string endHHMM3 = str.substring(i_sessionStr3, 5, 9)   
-    string startLabel3 = str.format("{0}:{1}", str.substring(startHHMM3, 0, 2), str.substring(startHHMM3, 2, 4)) 
-    string endLabel3 = str.format("{0}:{1}", str.substring(endHHMM3, 0, 2), str.substring(endHHMM3, 2, 4))     
-
-    bool isInSession3 = not na(time(timeframe.period, i_sessionStr3, i_timezone))
-    bool isSessionStart3 = isInSession3 and not isInSession3[1]
-    bool isSessionEnd3 = not isInSession3 and isInSession3[1]
-    
-    if isSessionStart3
-        line.new(bar_index, low, bar_index, high, xloc.bar_index, extend.both, i_lineColorSlot3, lineStyleSlot3, 1)
-        if i_showTextSlot3
-            label.new(bar_index, high, startLabel3, xloc.bar_index, yloc.abovebar, 
-                 color.new(color.white, 100), label.style_none, i_lineColorSlot3, size.normal)
-
-    if isSessionEnd3
-        line.new(bar_index, low, bar_index, high, xloc.bar_index, extend.both, i_lineColorSlot3, lineStyleSlot3, 1)
-        if i_showTextSlot3
-            label.new(bar_index, high, endLabel3, xloc.bar_index, yloc.abovebar, 
-                 color.new(color.white, 100), label.style_none, i_lineColorSlot3, size.normal)
+lnSL1 := f_processSlot(i_useSlot1, i_showOpenSlot1, i_session1, i_colorSlot1, i_styleSlot1, i_showTextSlot1, lnSL1)
+lnSL2 := f_processSlot(i_useSlot2, i_showOpenSlot2, i_session2, i_colorSlot2, i_styleSlot2, i_showTextSlot2, lnSL2)
+lnSL3 := f_processSlot(i_useSlot3, i_showOpenSlot3, i_session3, i_colorSlot3, i_styleSlot3, i_showTextSlot3, lnSL3)
